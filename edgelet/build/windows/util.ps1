@@ -52,7 +52,8 @@ function Get-IotEdgeFolder
 function Assert-Rust
 {
     param (
-        [switch] $Arm
+        [switch] $Arm,
+        [switch] $Arm64
     )
 
     $ErrorActionPreference = 'Continue'
@@ -61,6 +62,12 @@ function Assert-Rust
         if (-not (Test-Path 'rust-windows-arm')) {
             # if the folder rust-windows-arm exists, we assume the private rust compiler for arm is installed
             InstallWinArmPrivateRustCompiler
+        }
+    }
+    elseif ($Arm64) {
+        if (-not (Test-Path 'rust-windows-arm64')) {
+            # if the folder rust-windows-arm exists, we assume the private rust compiler for arm is installed
+            InstallWinArmPrivateRustCompiler $Arm64
         }
     }
     elseif (-not (Test-RustUp)) {
@@ -90,15 +97,31 @@ function Assert-Rust
     $ErrorActionPreference = 'Stop'
 }
 
-function InstallWinArmPrivateRustCompiler {
+function InstallWinArmPrivateRustCompiler
+{
+    param (
+        [switch] $Arm64
+    )
+ 
+    #default arm binaries
     $link = 'https://edgebuild.blob.core.windows.net/iotedge-win-arm32v7-tools/rust-windows-arm.zip'
+    $zipFilePath = "rust-windows-arm"
+    $destinationFolderPath = "rust-windows-arm"
+
+    if($Arm64)
+    {
+        # todo:mohan link needs to be updated once zip file uploaded to the blob storage
+        $link = '\\scratch2\scratch\mdatla\iotedge-win-arm64-tools\rust-win-arm64.zip'
+        $zipFilePath = "rust-windows-arm64"
+        $destinationFolderPath = "rust-windows-arm64"
+    }
 
     Write-Host "Downloading $link"
     $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest $link -OutFile 'rust-windows-arm.zip' -UseBasicParsing
+    Invoke-WebRequest $link -OutFile $zipFilePath -UseBasicParsing
 
     Write-Host "Extracting $link"
-    Expand-Archive -Path 'rust-windows-arm.zip' -DestinationPath 'rust-windows-arm'
+    Expand-Archive -Path $zipFilePath -DestinationPath $destinationFolderPath
     $ProgressPreference = 'Stop'
 }
 
