@@ -13,24 +13,29 @@ $ErrorActionPreference = 'Continue'
 
 . (Join-Path $PSScriptRoot 'util.ps1')
 
-$targetArchs = @('amd64', 'arm32v7')
+$targetArchs = @('amd64', 'arm32v7', 'aarch64')
 
 for ($i = 0; $i -lt $targetArchs.Length; $i++) {
     $Arm = ($targetArchs[$i] -eq "arm32v7")
-
-    Assert-Rust -Arm:$Arm
+    $Arm64 = ($targetArchs[$i] -eq "aarch64")
+    Assert-Rust -Arm:$Arm -Arm64:$Arm64
 
     $oldPath = ''
 
-    if ($Arm) {
+    if ($Arm -or $Arm64) {
         if ($BuildConfiguration -eq 'debug') {
             # Arm rust compiler does not support debug build
             continue
         }
 
-        $oldPath = ReplacePrivateRustInPath
+        $oldPath = ReplacePrivateRustInPath -Arm:$Arm -Arm64:$Arm64
 
-        PatchRustForArm
+        if($Arm64) {
+            PatchRustForArm -Arm64
+        }
+        else {
+            PatchRustForArm
+        }
     }
 
     If ($BuildConfiguration -eq 'release') {
@@ -42,7 +47,7 @@ for ($i = 0; $i -lt $targetArchs.Length; $i++) {
         $BuildConfigOption = ''
     }
 
-    $cargo = Get-CargoCommand -Arm:$Arm
+    $cargo = Get-CargoCommand -Arm:$Arm -Arm64:$Arm64
     $ManifestPath = Get-Manifest
 
     $versionInfoFilePath = Join-Path $env:BUILD_REPOSITORY_LOCALPATH 'versionInfo.json'
@@ -51,8 +56,18 @@ for ($i = 0; $i -lt $targetArchs.Length; $i++) {
 
     $originalRustflags = $env:RUSTFLAGS
     $env:RUSTFLAGS += ' -C target-feature=+crt-static'
-    Write-Host "$cargo build -p iotedge-diagnostics $(if ($Arm) { '--target thumbv7a-pc-windows-msvc' }) $BuildConfigOption --manifest-path $ManifestPath"
-    Invoke-Expression "$cargo build -p iotedge-diagnostics $(if ($Arm) { '--target thumbv7a-pc-windows-msvc' }) $BuildConfigOption --manifest-path $ManifestPath"
+
+    $architectureTuple = ''
+
+    if($Arm) {
+        $architectureTuple = '--target thumbv7a-pc-windows-msvc'
+    }
+    elseif($Arm64) {
+        $architectureTuple ='--target aarch64-pc-windows-msvc'
+    }
+
+    Write-Host "$cargo build -p iotedge-diagnostics $architectureTuple $BuildConfigOption --manifest-path $ManifestPath"
+    Invoke-Expression "$cargo build -p iotedge-diagnostics $architectureTuple $BuildConfigOption --manifest-path $ManifestPath"
     if ($originalRustflags -eq '') {
         Remove-Item Env:\RUSTFLAGS
     }
@@ -83,5 +98,8 @@ Copy-Item -Verbose `
 Copy-Item -Verbose `
     ([IO.Path]::Combine($env:BUILD_REPOSITORY_LOCALPATH, 'edgelet', 'target', 'thumbv7a-pc-windows-msvc', $BuildConfiguration, 'iotedge-diagnostics.exe')) `
     ([IO.Path]::Combine($publishFolder, 'docker', 'windows', 'arm32v7'))
-    
+
+    Copy-Item -Verbose `
+    ([IO.Path]::Combine($env:BUILD_REPOSITORY_LOCALPATH, 'edgelet', 'target', 'aarch64-pc-windows-msvc', $BuildConfiguration, 'iotedge-diagnostics.exe')) `
+    ([IO.Path]::Combine($publishFolder, 'docker', 'windows', 'aarch64'))
 $ErrorActionPreference = 'Stop'

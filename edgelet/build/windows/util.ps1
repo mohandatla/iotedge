@@ -13,16 +13,26 @@ function GetPrivateRustPath
     Join-Path -Path (Get-IotEdgeFolder) -ChildPath 'rust-windows-arm/rust-windows-arm/bin/'
 }
 
+function GetPrivateRustPathForArm64
+{
+    Join-Path -Path (Get-IotEdgeFolder) -ChildPath 'rust-windows-arm64/rust-windows-arm64/bin/'
+}
+
 function Get-CargoCommand
 {
     param (
-        [switch] $Arm
+        [switch] $Arm,
+        [switch] $Arm64
     )
 
     if ($Arm) {
         # we have private rust arm tool chain downloaded and unzipped to <source root>\rust-windows-arm\rust-windows-arm\cargo.exe
         Join-Path -Path (GetPrivateRustPath) -ChildPath 'cargo.exe'
     }
+	elseif($Arm64)
+	{
+		Join-Path -Path (GetPrivateRustPathForArm64) -ChildPath 'cargo.exe'
+	}
     elseif (Test-RustUp) {
         'cargo +stable-x86_64-pc-windows-msvc '
     }
@@ -67,7 +77,7 @@ function Assert-Rust
     elseif ($Arm64) {
         if (-not (Test-Path 'rust-windows-arm64')) {
             # if the folder rust-windows-arm exists, we assume the private rust compiler for arm is installed
-            InstallWinArmPrivateRustCompiler $Arm64
+            InstallWinArmPrivateRustCompiler -Arm64
         }
     }
     elseif (-not (Test-RustUp)) {
@@ -132,7 +142,8 @@ function InstallWinArmPrivateRustCompiler
 #   this is optional because when building iotedge-diagnostics project, openssl is not required
 function PatchRustForArm {
     param (
-        [switch] $OpenSSL
+        [switch] $OpenSSL,
+        [switch] $Arm64
     )
 
     $vsPath = Join-Path -Path ${env:ProgramFiles(x86)} -ChildPath 'Microsoft Visual Studio'
@@ -179,7 +190,12 @@ mio-uds-windows = { git = "https://github.com/philipktlin/mio-uds-windows.git", 
     Write-Host "Add-Content -Path $ManifestPath -Value $ForkedCrates"
     Add-Content -Path $ManifestPath -Value $ForkedCrates
 
-    $cargo = Get-CargoCommand -Arm
+    if($Arm64) {
+        $cargo = Get-CargoCommand -Arm64
+    }
+    else {
+        $cargo = Get-CargoCommand -Arm
+    }
 
     $ErrorActionPreference = 'Continue'
 
@@ -192,6 +208,10 @@ mio-uds-windows = { git = "https://github.com/philipktlin/mio-uds-windows.git", 
 }
 
 function ReplacePrivateRustInPath {
+    param (
+        [switch] $Arm,
+        [switch] $Arm64
+    )
     Write-Host 'Remove cargo path in user profile from PATH, and add the private arm version to the PATH'
 
     $oldPath = $env:PATH
@@ -204,7 +224,12 @@ function ReplacePrivateRustInPath {
             }
             -not $removePath
         }
-    $newPaths += GetPrivateRustPath
+    if($Arm) {
+        $newPaths += GetPrivateRustPath
+    }
+    elseif($Arm64) {
+        $newPaths += GetPrivateRustPathForArm64
+    }
     $env:PATH = $newPaths -join ';'
 
     $oldPath

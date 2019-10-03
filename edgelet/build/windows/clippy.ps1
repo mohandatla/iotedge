@@ -2,7 +2,8 @@
 
 param(
     [switch] $Release,
-    [switch] $Arm
+    [switch] $Arm,
+    [switch] $Arm64
 )
 
 # Bring in util functions
@@ -10,9 +11,9 @@ $util = Join-Path -Path $PSScriptRoot -ChildPath "util.ps1"
 . $util
 
 # Ensure rust is installed
-Assert-Rust -Arm:$Arm
+Assert-Rust -Arm:$Arm -Arm64:$Arm64
 
-$cargo = Get-CargoCommand -Arm:$Arm
+$cargo = Get-CargoCommand -Arm:$Arm -Arm64:$Arm64
 Write-Host $cargo
 
 rustup component add clippy
@@ -21,12 +22,16 @@ if ($LastExitCode -ne 0) {
     Throw "Unable to install clippy. Failed with $LastExitCode"
 }
 
-$oldPath = if ($Arm) { ReplacePrivateRustInPath } else { '' }
+$oldPath = if ($Arm -or $Arm64) { ReplacePrivateRustInPath -Arm:$Arm -Arm64:$Arm64} else { '' }
 
 $ErrorActionPreference = 'Continue'
 
 if ($Arm) {
     PatchRustForArm -OpenSSL
+}
+elseif($Arm64)
+{
+    PatchRustForArm -OpenSSL -Arm64
 }
 
 # Run cargo build by specifying the manifest file
@@ -56,6 +61,6 @@ if ($LastExitCode -ne 0) {
 
 $ErrorActionPreference = 'Stop'
 
-if ($Arm -and (-not [string]::IsNullOrEmpty($oldPath))) {
+if (($Arm -or -Arm64) -and (-not [string]::IsNullOrEmpty($oldPath))) {
     $env:PATH = $oldPath
 }

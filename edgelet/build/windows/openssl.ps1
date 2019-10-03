@@ -41,19 +41,17 @@ function Get-OpenSSL
     $strawberryPerlPath = "$env:HOMEDRIVE\vcpkg\Downloads\strawberry-perl-5.24.1.1-32bit-portable.zip"
     Invoke-WebRequest -Uri $strawberryPerlUri -OutFile $strawberryPerlPath
 
-	$architecture = 'x64'
-	$packageName = 'openssl:x64-windows'
+    $architecture = 'x64'
+    $packageName = 'openssl:x64-windows'
 
-	if($Arm)
-	{
-		$architecture = 'arm'
-		$packageName = 'openssl-windows:arm-windows'
-	}
-	else if($Arm64)
-	{
-		$architecture = 'arm64'
-		$packageName = 'openssl-windows:arm64-windows'
-	}
+    if($Arm) {
+        $architecture = 'arm'
+        $packageName = 'openssl-windows:arm-windows'
+    }
+    elseif($Arm64) {
+        $architecture = 'arm64'
+        $packageName = 'openssl-windows:arm64-windows'
+    }
 
     Write-Host "Installing OpenSSL for $architecture..."
     & $env:HOMEDRIVE\vcpkg\vcpkg.exe install $packageName

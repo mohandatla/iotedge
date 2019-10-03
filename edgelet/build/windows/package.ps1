@@ -2,7 +2,8 @@ Param(
     [Switch] $CreateTemplate, 
     [Switch] $CreateCab, 
     [Switch] $SkipInstallCerts, 
-    [Switch] $Arm
+    [Switch] $Arm,
+    [Switch] $Arm64
 )
 
 $EdgeCab = "Microsoft-Azure-IoTEdge.cab"
@@ -65,7 +66,8 @@ Function New-Package([string] $Name, [string] $Version)
     $manifest = "edgelet\build\windows\$Name.wm.xml"
     $oldPath = ''
 
-    if ($Arm) {
+    # TODO:Mohan workaround to get makecat.exe path set correctly on local VM, nees to investigate why it is failing for amd64.
+    #    if ($Arm) {
         # pkggen cannot find makecat.exe from below folder at runtime, so we need to put makecat from latest windows kits to Path
         # if we cannot find windows 10 kits or makecat.exe, we have to fail the build
         $Win10KitsRoot = Get-ItemProperty -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots' -Name KitsRoot10 | % KitsRoot10
@@ -88,13 +90,23 @@ Function New-Package([string] $Name, [string] $Version)
         $env:PATH = $LatestWin10KitsX64Bin + ';' + $env:PATH
         Write-Host $env:PATH
         Write-Host $(Get-Command makecat.exe).Path
-    }
+#    }
 
-    Invoke-Expression "& '$pkggen' $manifest /universalbsp /variables:'_REPO_ROOT=..\..\..;_OPENSSL_ROOT_DIR=$env:OPENSSL_ROOT_DIR;_Arch=$(if ($Arm) { 'thumbv7a-pc-windows-msvc' } else { '' })' /cpu:$(if ($Arm) { 'arm' } else { 'amd64' }) /version:$Version"
+    $architectureTuple = ''
+    $cpuTuple = 'amd64'
+
+    if($Arm) {
+        $architectureTuple = 'thumbv7a-pc-windows-msvc'
+        $cpuTuple = 'arm'
+    }
+    elseif($Arm64) {
+        $architectureTuple = 'aarch64-pc-windows-msvc'
+        $cpuTuple = 'arm64'
+    }
+    Invoke-Expression "& '$pkggen' $manifest /universalbsp /variables:'_REPO_ROOT=..\..\..;_OPENSSL_ROOT_DIR=$env:OPENSSL_ROOT_DIR;_Arch=$architectureTuple' /cpu:$cpuTuple /version:$Version"
     if ($LASTEXITCODE) {
         Throw "Failed to package cab"
     }
-
     if (Test-Path $EdgeTemplate) {
         Remove-Item -Path $EdgeTemplate -Recurse -Force
     }
@@ -110,6 +122,7 @@ Function New-Package([string] $Name, [string] $Version)
 }
 
 if ($CreateTemplate) {
+# TODO:Mohan Add snippet code to copy arm64 docker files until that copy amd64 docker files.
     $docker_cli_uri =
         if ($Arm) {
             'https://edgebuild.blob.core.windows.net/iotedge-win-arm32v7-tools/docker.exe'
