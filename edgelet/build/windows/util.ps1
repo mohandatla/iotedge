@@ -29,10 +29,9 @@ function Get-CargoCommand
         # we have private rust arm tool chain downloaded and unzipped to <source root>\rust-windows-arm\rust-windows-arm\cargo.exe
         Join-Path -Path (GetPrivateRustPath) -ChildPath 'cargo.exe'
     }
-	elseif($Arm64)
-	{
-		Join-Path -Path (GetPrivateRustPathForArm64) -ChildPath 'cargo.exe'
-	}
+    elseif($Arm64) {
+        Join-Path -Path (GetPrivateRustPathForArm64) -ChildPath 'cargo.exe'
+    }
     elseif (Test-RustUp) {
         'cargo +stable-x86_64-pc-windows-msvc '
     }
@@ -122,7 +121,7 @@ function InstallWinArmPrivateRustCompiler
     {
         # todo:mohan link needs to be updated once zip file uploaded to the blob storage
         $link = '\\scratch2\scratch\mdatla\iotedge-win-arm64-tools\rust-win-arm64.zip'
-        $zipFilePath = "rust-windows-arm64"
+        $zipFilePath = "rust-windows-arm64.zip"
         $destinationFolderPath = "rust-windows-arm64"
     }
 
@@ -179,7 +178,7 @@ function PatchRustForArm {
 iovec = { git = "https://github.com/philipktlin/iovec", branch = "arm" }
 mio = { git = "https://github.com/philipktlin/mio", branch = "arm" }
 miow = { git = "https://github.com/philipktlin/miow", branch = "arm" }
-winapi = { git = "https://github.com/philipktlin/winapi-rs", branch = "arm/v0.3.5" }
+winapi = { git = "https://github.com/mohandatla/winapi-rs", branch = "arm/v0.3.5" }
 
 [patch."https://github.com/Azure/mio-uds-windows.git"]
 mio-uds-windows = { git = "https://github.com/philipktlin/mio-uds-windows.git", branch = "arm" }
