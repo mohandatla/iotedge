@@ -39,8 +39,10 @@ function Get-OpenSSL
 
     $strawberryPerlUri = "https://edgebuild.blob.core.windows.net/strawberry-perl/strawberry-perl-5.24.1.1-32bit-portable.zip"
     $strawberryPerlPath = "$env:HOMEDRIVE\vcpkg\Downloads\strawberry-perl-5.24.1.1-32bit-portable.zip"
+# TODO:Mohan Workaround to avoid long downloading time.
+    $progressPreference = 'silentlyContinue' # Subsequent calls do not display UI.
     Invoke-WebRequest -Uri $strawberryPerlUri -OutFile $strawberryPerlPath
-
+    $progressPreference = 'Continue' # Subsequent calls do display UI.
     $architecture = 'x64'
     $packageName = 'openssl:x64-windows'
 
