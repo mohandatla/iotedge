@@ -20,7 +20,7 @@ impl SetPlatformDefines for Config {
     fn set_platform_defines(&mut self) -> &mut Self {
         // if the builder chooses to set "use_emulator", use their setting, otherwise, use the
         // emulator for debug and a real device for release
-        let use_emulator = env::var(USE_EMULATOR)
+        let _use_emulator = env::var(USE_EMULATOR)
             .or_else(|_| {
                 env::var("PROFILE").and_then(|profile| {
                     Ok(if profile.to_lowercase() == "release" {
@@ -37,7 +37,8 @@ impl SetPlatformDefines for Config {
             .cxxflag("/DWIN32")
             .cflag("/D_WINDOWS")
             .cxxflag("/D_WINDOWS")
-            .define(USE_EMULATOR, use_emulator)
+            // todo:mohan
+            // .define(USE_EMULATOR, use_emulator)
             .define("use_cppunittest", "OFF")
     }
 

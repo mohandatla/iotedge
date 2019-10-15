@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 
-#![deny(rust_2018_idioms, warnings)]
+//TODO: Mohan
+// clap has fix https://github.com/clap-rs/clap/commit/f346308c377dbbb76efde0e680d07d745df4f640#diff-e1576943a5907b15388ab726037ebdb3 
+// but not released the new version in crate.
+// #![deny(rust_2018_idioms, warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![allow(
     clippy::doc_markdown, // clippy want the "IoT" of "IoT Hub" in a code fence
