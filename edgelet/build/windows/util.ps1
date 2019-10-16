@@ -120,7 +120,7 @@ function InstallWinArmPrivateRustCompiler
     if($Arm64)
     {
         # todo:mohan link needs to be updated once zip file uploaded to the blob storage
-        $link = '\\scratch2\scratch\mdatla\iotedge-win-arm64-tools\rust-win-arm64.zip'
+        $link = '\\scratch2\scratch\mdatla\iotedge-windows-arm64-tools\rust-windows-arm64.zip'
         $zipFilePath = "rust-windows-arm64.zip"
         $destinationFolderPath = "rust-windows-arm64"
     }
