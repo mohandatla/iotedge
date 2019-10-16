@@ -271,7 +271,7 @@ jobs:
         displayName: 'Setup libiothsm'
         inputs:
           workingDirectory: 'edgelet/hsm-sys/azure-iot-hsm-c/build'
-          cmakeArgs: '-G "Visual Studio 15 2017 ARM64" -DBUILD_SHARED=ON -Duse_emulator=OFF ..'
+          cmakeArgs: '-G "Visual Studio 15 2017" -A "ARM64" -DBUILD_SHARED=ON -Duse_emulator=OFF ..'
       - task: CMake@1
         displayName: 'Build libiothsm'
         inputs:
